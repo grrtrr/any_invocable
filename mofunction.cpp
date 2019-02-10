@@ -193,143 +193,83 @@ bool operator!=(std::nullptr_t, const mofunction<Signature>& rhs) noexcept {
 struct TestNotCallable {};
 
 struct TestCopyOnly {
-  TestCopyOnly() {
-    // std::cout << "TestCopyOnly default construct\n";
-  }
-  ~TestCopyOnly() {
-    // std::cout << "TestCopyOnly deconstruct\n";
-  }
-
+  TestCopyOnly() {}
+  ~TestCopyOnly() {}
   TestCopyOnly(const TestCopyOnly& that) : copied{that.copied} {
-    // std::cout << "TestCopyOnly copy construct\n";
     if (copied) {
       (*copied)++;
     }
   }
 
   TestCopyOnly& operator=(const TestCopyOnly& that) {
-    // std::cout << "TestCopyOnly copy assign\n";
     copied = that.copied;
     return *this;
   }
 
-  TestCopyOnly(size_t* ptr) : copied{ptr} {
-    // std::cout << "TestCopyOnly argument construct\n";
-  }
+  TestCopyOnly(size_t* ptr) : copied{ptr} {}
 
-  void operator()() const& {
-    // std::cout << "TestCopyOnly const call\n";
-  }
-  void operator()() & {
-    // std::cout << "TestCopyOnly lref call\n";
-  }
-  void operator()() && {
-    // std::cout << "TestCopyOnly rref call\n";
-  }
+  void operator()() const& {}
+  void operator()() & {}
+  void operator()() && {}
 
   size_t* copied = nullptr;
 };
 
 struct TestDestroy {
-  TestDestroy() {
-    // std::cout << "TestDestroy default construct\n";
-  }
+  TestDestroy() {}
   ~TestDestroy() {
-    // std::cout << "TestDestroy destruct\n";
     if (destroyed) {
       (*destroyed)++;
     }
   }
 
-  TestDestroy(size_t* ptr) : destroyed{ptr} {
-    // std::cout << "TestDestroy argument construct\n";
-  }
+  TestDestroy(size_t* ptr) : destroyed{ptr} {}
 
-  void operator()() const& {
-    // std::cout << "TestDestroy const call\n";
-  }
-  void operator()() & {
-    // std::cout << "TestDestroy lref call\n";
-  }
-  void operator()() && {
-    // std::cout << "TestDestroy rref call\n";
-  }
+  void operator()() const& {}
+  void operator()() & {}
+  void operator()() && {}
 
   size_t* destroyed = nullptr;
 };
 
 struct TestCopy {
-  TestCopy() {
-    // std::cout << "TestCopy default construct\n";
-  }
-  ~TestCopy() {
-    // std::cout << "TestCopy deconstruct\n";
-  }
+  TestCopy() {}
+  ~TestCopy() {}
 
-  TestCopy(const TestCopy&) {
-    // std::cout << "TestCopy copy construct\n";
-  }
-  TestCopy& operator=(const TestCopy&) {
-    // std::cout << "TestCopy copy assign\n";
-    return *this;
-  }
+  TestCopy(const TestCopy&) {}
+  TestCopy& operator=(const TestCopy&) { return *this; }
 
-  TestCopy(TestCopy&&) {
-    // std::cout << "TestCopy move construct\n";
-  }
-  TestCopy& operator=(TestCopy&&) {
-    // std::cout << "TestCopy move assign\n";
-    return *this;
-  }
+  TestCopy(TestCopy&&) {}
+  TestCopy& operator=(TestCopy&&) { return *this; }
 
-  void operator()() const& {
-    // std::cout << "TestCopy const call\n";
-  }
-  void operator()() & {
-    // std::cout << "TestCopy lref call\n";
-  }
-  void operator()() && {
-    // std::cout << "TestCopy rref call\n";
-  }
+  void operator()() const& {}
+  void operator()() & {}
+  void operator()() && {}
 };
 
 struct TestMoveOnly {
-  TestMoveOnly() {
-    // std::cout << "TestMoveOnly default construct\n";
-  }
-  ~TestMoveOnly() {
-    // std::cout << "TestMoveOnly destruct\n";
-  }
+  TestMoveOnly() {}
+  ~TestMoveOnly() {}
 
   TestMoveOnly(const TestMoveOnly&) = delete;
   TestMoveOnly& operator=(const TestMoveOnly&) = delete;
 
   TestMoveOnly(TestMoveOnly&& that) : moved{that.moved} {
-    // std::cout << "TestMoveOnly move construct\n";
     if (moved) {
       (*moved)++;
     }
   }
 
   TestMoveOnly& operator=(TestMoveOnly&& that) {
-    // std::cout << "TestMoveOnly move assign\n";
     moved = that.moved;
     return *this;
   }
 
-  TestMoveOnly(size_t* ptr) : moved{ptr} {
-    // std::cout << "TestMoveOnly argument construct\n";
-  }
+  TestMoveOnly(size_t* ptr) : moved{ptr} {}
 
-  void operator()() const& {
-    // std::cout << "TestMoveOnly const call\n";
-  }
-  void operator()() & {
-    // std::cout << "TestMoveOnly lref call\n";
-  }
-  void operator()() && {
-    // std::cout << "TestMoveOnly rref call\n";
-  }
+  void operator()() const& {}
+  void operator()() & {}
+  void operator()() && {}
 
   size_t* moved = nullptr;
 };
@@ -338,14 +278,12 @@ auto test_empty_lambda = [] {};
 void test_empty_function() {}
 
 void test_function(size_t* count) {
-  // std::cout << "test_function called\n";
   if (count) {
     (*count)++;
   }
 }
 
 auto test_lambda = [](size_t* count) {
-  // std::cout << "test_lambda called\n";
   if (count) {
     (*count)++;
   }
@@ -353,7 +291,6 @@ auto test_lambda = [](size_t* count) {
 
 struct TestCallable {
   void operator()(size_t* count) {
-    // std::cout << "TestCallable call\n";
     if (count) {
       (*count)++;
     }
@@ -362,7 +299,6 @@ struct TestCallable {
 
 struct TestConstCallable {
   void operator()(size_t* count) const {
-    // std::cout << "TestConstCallable call\n";
     if (count) {
       (*count)++;
     }
@@ -371,14 +307,14 @@ struct TestConstCallable {
 
 struct TestRvrefCallable {
   void operator()(size_t* count) && {
-    // std::cout << "TestRvrefCallable call\n";
     if (count) {
       (*count)++;
     }
   }
 };
 
-// ==== Unit Tests ============================================================
+// ==== Unit Tests
+// ============================================================
 
 int main() {
   // ==== Targetting Constructors
@@ -607,8 +543,8 @@ int main() {
 
   // ==== Const signature, Non-const object, Lv-Callable
   {
-    std::cout
-        << "Const signature, Non-const object, Lv-Callable: function called\n";
+    std::cout << "Const signature, Non-const object, Lv-Callable: function "
+                 "called\n";
     size_t called = 0;
     std::mofunction<void(size_t*) const> f(test_function);
     f(&called);
@@ -690,8 +626,8 @@ int main() {
 
   // ==== Const signature, Non-const object, Rv-Callable
   {
-    std::cout
-        << "Const signature, Non-const object, Rv-Callable: function called\n";
+    std::cout << "Const signature, Non-const object, Rv-Callable: function "
+                 "called\n";
     size_t called = 0;
     std::mofunction<void(size_t*) const> f(test_function);
     std::move(f)(&called);
@@ -756,9 +692,9 @@ int main() {
     assert(called == 0);
   }
   {
-    std::cout
-        << "Rvref signature, Non-const object, Lv-Callable: const callabe not "
-           "callabe\n";
+    std::cout << "Rvref signature, Non-const object, Lv-Callable: const "
+                 "callabe not "
+                 "callabe\n";
     size_t called = 0;
     std::mofunction<void(size_t*) const> f(TestConstCallable{});
     // f(&called);
@@ -783,8 +719,8 @@ int main() {
     assert(called == 0);
   }
   {
-    std::cout
-        << "Rvref signature, Const object, Lv-Callable: lambda not callable\n";
+    std::cout << "Rvref signature, Const object, Lv-Callable: lambda not "
+                 "callable\n";
     size_t called = 0;
     const std::mofunction<void(size_t*) &&> f(test_lambda);
     // std::move(f)(&called);
@@ -817,8 +753,8 @@ int main() {
 
   // ==== Rvref signature, Non-const object, Rv-Callable
   {
-    std::cout
-        << "Rvref signature, Non-const object, Rv-Callable: function called\n";
+    std::cout << "Rvref signature, Non-const object, Rv-Callable: function "
+                 "called\n";
     size_t called = 0;
     std::mofunction<void(size_t*) &&> f(test_function);
     std::move(f)(&called);
@@ -833,8 +769,8 @@ int main() {
     assert(called > 0);
   }
   {
-    std::cout
-        << "Rvref signature, Non-const object, Rv-Callable: callable called\n";
+    std::cout << "Rvref signature, Non-const object, Rv-Callable: callable "
+                 "called\n";
     size_t called = 0;
     std::mofunction<void(size_t*) &&> f(TestCallable{});
     std::move(f)(&called);
@@ -877,8 +813,8 @@ int main() {
     assert(called > 0);
   }
   {
-    std::cout
-        << "callable object constructed nofunction is not copy constructible\n";
+    std::cout << "callable object constructed nofunction is not copy "
+                 "constructible\n";
     size_t called = 0;
     std::mofunction<void(size_t*)> f(TestCallable{});
     // std::mofunction<void(size_t*)> g(f);
@@ -905,8 +841,8 @@ int main() {
     assert(called > 0);
   }
   {
-    std::cout
-        << "rvref callable object constructed nofunction is move assignable\n";
+    std::cout << "rvref callable object constructed nofunction is move "
+                 "assignable\n";
     size_t called = 0;
     std::mofunction<void(size_t*) const> f(TestConstCallable{});
     std::mofunction<void(size_t*) const> g;
@@ -924,8 +860,8 @@ int main() {
     assert(called > 0);
   }
   {
-    std::cout
-        << "const callable object constructed nofunction is move assignable\n";
+    std::cout << "const callable object constructed nofunction is move "
+                 "assignable\n";
     size_t called = 0;
     std::mofunction<void(size_t*) &&> f(TestRvrefCallable{});
     std::mofunction<void(size_t*) &&> g;
