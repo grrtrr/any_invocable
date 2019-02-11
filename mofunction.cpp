@@ -313,8 +313,7 @@ struct TestRvrefCallable {
   }
 };
 
-// ==== Unit Tests
-// ============================================================
+// ==== Unit Tests ============================================================
 
 int main() {
   // ==== Targetting Constructors
@@ -578,7 +577,7 @@ int main() {
     std::cout << "Const signature, Non-const object, Lv-Callable: rvref "
                  "callable not constructed\n";
     size_t called = 0;
-    // std::mofunction<void(size_t*)> f(TestRvrefCallable{});
+    // std::mofunction<void(size_t*) const> f(TestRvrefCallable{});
     // f(&called);
     assert(called == 0);
   }
@@ -619,7 +618,7 @@ int main() {
     std::cout << "Const signature, Const object, Lv-Callable: rvref callable "
                  "not constructed\n";
     size_t called = 0;
-    // const std::mofunction<void(size_t*)> f(TestRvrefCallable{});
+    // const std::mofunction<void(size_t*) const> f(TestRvrefCallable{});
     // f(&called);
     assert(called == 0);
   }
@@ -661,7 +660,7 @@ int main() {
     std::cout << "Const signature, Non-const object, Rv-Callable: rvref "
                  "callable nto constructed\n";
     size_t called = 0;
-    // std::mofunction<void(size_t*)> f(TestRvrefCallable{});
+    // std::mofunction<void(size_t*) const> f(TestRvrefCallable{});
     // std::move(f)(&called);
     assert(called == 0);
   }
@@ -715,7 +714,7 @@ int main() {
                  "callable\n";
     size_t called = 0;
     const std::mofunction<void(size_t*) &&> f(test_function);
-    // std::move(f)(&called);
+    // f(&called);
     assert(called == 0);
   }
   {
@@ -723,7 +722,7 @@ int main() {
                  "callable\n";
     size_t called = 0;
     const std::mofunction<void(size_t*) &&> f(test_lambda);
-    // std::move(f)(&called);
+    // f(&called);
     assert(called == 0);
   }
   {
@@ -731,7 +730,7 @@ int main() {
                  "callable\n";
     size_t called = 0;
     const std::mofunction<void(size_t*) &&> f(TestCallable{});
-    // std::move(f)(&called);
+    // f(&called);
     assert(called == 0);
   }
   {
@@ -739,7 +738,7 @@ int main() {
                  "not callable\n";
     size_t called = 0;
     const std::mofunction<void(size_t*) const> f(TestConstCallable{});
-    // std::move(f)(&called);
+    // f(&called);
     assert(called == 0);
   }
   {
@@ -747,7 +746,7 @@ int main() {
                  "not callable\n";
     size_t called = 0;
     const std::mofunction<void(size_t*) &&> f(TestRvrefCallable{});
-    // std::move(f)(&called);
+    // f(&called);
     assert(called == 0);
   }
 
