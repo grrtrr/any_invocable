@@ -8,125 +8,108 @@
 #include <memory>
 #include <type_traits>
 
-namespace {
-template <class Signature>
+//#define MOFUNCTION_WITH_ALL_CVREF_QUALIFIER_FORMS
+//#define MOFUNCTION_WITH_NOEXCEPT_FORMS
+
+template<class MemFunPtr>
+struct memfun_ptr_to_fun_type;
+
+template<class Sig>
 struct mofunction_interface;
 
-template <class Result, class... Args>
-struct mofunction_interface<Result(Args...)> {
-  virtual Result invoke(Args...) = 0;
-  virtual ~mofunction_interface() {}
-};
-
-template <class Result, class... Args>
-struct mofunction_interface<Result(Args...) const> {
-  virtual Result invoke(Args...) = 0;
-  virtual ~mofunction_interface() {}
-};
-
-template <class Result, class... Args>
-struct mofunction_interface<Result(Args...) &&> {
-  virtual Result invoke(Args...) = 0;
-  virtual ~mofunction_interface() {}
-};
-
-template <class Signature, class Callable>
+template<class Sig, class Callable>
 struct mofunction_child;
 
-template <class Result, class... Args, class Callable>
-struct mofunction_child<Result(Args...), Callable>
-    : mofunction_interface<Result(Args...)> {
-  explicit mofunction_child(Callable&& c) : c(std::move(c)) {}
-  virtual Result invoke(Args... args) override {
-    if constexpr (std::is_void_v<Result>)
-      std::invoke(static_cast<Callable&>(c), static_cast<Args&&>(args)...);
-    else
-      return std::invoke(static_cast<Callable&>(c),
-                         static_cast<Args&&>(args)...);
-  }
-
-  [[no_unique_address]] Callable c;
-};
-
-template <class Result, class... Args, class Callable>
-struct mofunction_child<Result(Args...) const, Callable>
-    : mofunction_interface<Result(Args...) const> {
-  explicit mofunction_child(Callable&& c) : c(std::move(c)) {}
-  virtual Result invoke(Args... args) override {
-    if constexpr (std::is_void_v<Result>)
-      std::invoke(static_cast<const Callable&>(c),
-                  static_cast<Args&&>(args)...);
-    else
-      return std::invoke(static_cast<const Callable&>(c),
-                         static_cast<Args&&>(args)...);
-  }
-
-  [[no_unique_address]] Callable c;
-};
-
-template <class Result, class... Args, class Callable>
-struct mofunction_child<Result(Args...)&&, Callable>
-    : mofunction_interface<Result(Args...) &&> {
-  explicit mofunction_child(Callable&& c) : c(std::move(c)) {}
-  virtual Result invoke(Args... args) override {
-    if constexpr (std::is_void_v<Result>)
-      std::invoke(static_cast<Callable&&>(c), static_cast<Args&&>(args)...);
-    else
-      return std::invoke(static_cast<Callable&&>(c),
-                         static_cast<Args&&>(args)...);
-  }
-
-  [[no_unique_address]] Callable c;
-};
-
-template <class Signature>
+template<class Sig>
 struct mofunction_impl;
 
-template <class Result, class... Args>
-struct mofunction_impl<Result(Args...)> {
-  using result_type = Result;
-  template <class F>
-  using requirements =
-      std::enable_if_t<std::is_invocable_r_v<Result, F, Args...>>*;
+template<bool IsNoexcept, class Ret, class F, class... Args>
+constexpr bool is_moinvocable_v = std::is_invocable_r_v<Ret, F, Args...>;
 
-  Result operator()(Args... args) {
-    return f ? f->invoke(static_cast<Args&&>(args)...)
-             : throw std::bad_function_call();
-  }
+template<class Ret, class F, class... Args>
+constexpr bool is_moinvocable_v<true, Ret, F, Args...>
+  = std::is_nothrow_invocable_r_v<Ret, F, Args...>;
 
-  std::unique_ptr<mofunction_interface<Result(Args...)>> f;
-};
+#define MOFUNCTION_IMPL_(qual_opt, qual_opt_ref, noexcept_)                    \
+template<class Ret, class C, class... P>                                       \
+struct memfun_ptr_to_fun_type<Ret (C::*)(P...) qual_opt noexcept_> {           \
+  using type = Ret(P...) qual_opt noexcept_;                                   \
+};                                                                             \
+                                                                               \
+template<class Ret, class... P>                                                \
+struct mofunction_interface<Ret(P...) qual_opt noexcept_> {                    \
+  virtual Ret invoke(P...) noexcept_ = 0;                                      \
+  virtual ~mofunction_interface() {}                                           \
+};                                                                             \
+                                                                               \
+template<class Ret, class... P, class Callable>                                \
+struct mofunction_child<Ret(P...) qual_opt noexcept_, Callable>                \
+  : mofunction_interface<Ret(P...) qual_opt noexcept_> {                       \
+  explicit mofunction_child(Callable&& c) : c(std::move(c)) {}                 \
+  virtual Ret invoke(P... args) noexcept_ override {                           \
+    if constexpr(std::is_void_v<Ret>)                                          \
+      std::invoke(static_cast<Callable qual_opt_ref>(c),                       \
+                  static_cast<P&&>(args)...);                                  \
+    else                                                                       \
+      return std::invoke(static_cast<Callable qual_opt_ref>(c),                \
+                         static_cast<P&&>(args)...);                           \
+  }                                                                            \
+                                                                               \
+  [[no_unique_address]] Callable c;                                            \
+};                                                                             \
+                                                                               \
+template<class Ret, class... P>                                                \
+struct mofunction_impl<Ret(P...) qual_opt noexcept_> {                         \
+  using result_type = Ret;                                                     \
+  template<class F>                                                            \
+  using requirements =                                                         \
+    std::enable_if_t<                                                          \
+      is_moinvocable_v<noexcept_(false),Ret,F qual_opt_ref,P...>>*;            \
+                                                                               \
+  Ret operator()(P... args) qual_opt noexcept_ {                               \
+    return f ? f->invoke(static_cast<P&&>(args)...)                            \
+             : throw std::bad_function_call();                                 \
+  }                                                                            \
+                                                                               \
+  std::unique_ptr<mofunction_interface<Ret(P...) qual_opt noexcept_>> f;       \
+}
 
-template <class Result, class... Args>
-struct mofunction_impl<Result(Args...) const> {
-  using result_type = Result;
-  template <class F>
-  using requirements =
-      std::enable_if_t<std::is_invocable_r_v<Result, const F&, Args...>>*;
+#ifdef MOFUNCTION_WITH_NOEXCEPT_FORMS
 
-  Result operator()(Args... args) const {
-    return f ? f->invoke(static_cast<Args&&>(args)...)
-             : throw std::bad_function_call();
-  }
+#define MOFUNCTION_IMPL(qual_opt, added_ref_of_qual_opt) \
+MOFUNCTION_IMPL_(qual_opt, qual_opt added_ref_of_qual_opt, ); \
+MOFUNCTION_IMPL_(qual_opt, qual_opt added_ref_of_qual_opt, noexcept)
 
-  std::unique_ptr<mofunction_interface<Result(Args...) const>> f;
-};
+#else
 
-template <class Result, class... Args>
-struct mofunction_impl<Result(Args...) &&> {
-  using result_type = Result;
-  template <class F>
-  using requirements =
-      std::enable_if_t<std::is_invocable_r_v<Result, F&&, Args...>>*;
+#define MOFUNCTION_IMPL(qual_opt, added_ref_of_qual_opt) \
+MOFUNCTION_IMPL_(qual_opt, qual_opt added_ref_of_qual_opt, )
 
-  Result operator()(Args... args) && {
-    return f ? f->invoke(static_cast<Args&&>(args)...)
-             : throw std::bad_function_call();
-  }
+#endif
 
-  std::unique_ptr<mofunction_interface<Result(Args...) &&>> f;
-};
-}  // namespace
+MOFUNCTION_IMPL(,&);
+MOFUNCTION_IMPL(const,&);
+MOFUNCTION_IMPL(&&,);
+
+#ifdef MOFUNCTION_WITH_ALL_CVREF_QUALIFIER_FORMS
+
+MOFUNCTION_IMPL(volatile,&);
+MOFUNCTION_IMPL(volatile const,&);
+
+MOFUNCTION_IMPL(&,);
+MOFUNCTION_IMPL(const&,);
+MOFUNCTION_IMPL(volatile&,);
+MOFUNCTION_IMPL(volatile const&,);
+
+MOFUNCTION_IMPL(const&&,);
+MOFUNCTION_IMPL(volatile&&,);
+MOFUNCTION_IMPL(volatile const&&,);
+
+#endif
+
+#undef MOFUNCTION_IMPL
+#undef MOFUNCTION_IMPL_
+
 
 namespace std {
 template <class Signature>
@@ -166,6 +149,9 @@ class mofunction : mofunction_impl<Signature> {
   void swap(mofunction& other) noexcept { this->f.swap(other.f); }
   explicit operator bool() const noexcept { return static_cast<bool>(this->f); }
 };
+
+template<class F> mofunction(F) ->
+mofunction<typename memfun_ptr_to_fun_type<decltype(&F::operator())>::type>;
 
 template <class Signature>
 bool operator==(const mofunction<Signature>& lhs, std::nullptr_t) noexcept {
